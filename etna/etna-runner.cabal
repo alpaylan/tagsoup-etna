@@ -1,0 +1,52 @@
+cabal-version:      3.0
+name:               etna-runner
+version:            0.1.0
+synopsis:           ETNA runner for tagsoup workload
+build-type:         Simple
+tested-with:        GHC == 9.6.6
+
+library
+    exposed-modules:
+        Etna.Result
+        Etna.Properties
+        Etna.Witnesses
+        Etna.Gens.QuickCheck
+        Etna.Gens.Hedgehog
+        Etna.Gens.Falsify
+        Etna.Gens.SmallCheck
+    hs-source-dirs:   src
+    default-language: Haskell2010
+    build-depends:
+        base               >=4.18 && <5,
+        QuickCheck         >=2.14,
+        hedgehog           >=1.4,
+        falsify            >=0.2,
+        smallcheck         >=1.2,
+        tagsoup
+    ghc-options:        -Wall -Wno-name-shadowing -Wno-unused-imports -Wno-unused-local-binds -Wno-unused-matches
+
+executable etna-runner
+    main-is:          Main.hs
+    hs-source-dirs:   app
+    default-language: Haskell2010
+    build-depends:
+        base,
+        etna-runner,
+        QuickCheck         >=2.14,
+        hedgehog           >=1.4,
+        falsify            >=0.2,
+        smallcheck         >=1.2,
+        tagsoup,
+        time,
+        data-default
+    ghc-options:        -Wall -Wno-unused-imports -Wno-unused-matches
+
+test-suite etna-witnesses
+    type:             exitcode-stdio-1.0
+    main-is:          Witnesses.hs
+    hs-source-dirs:   test
+    default-language: Haskell2010
+    build-depends:
+        base,
+        etna-runner
+    ghc-options:        -Wall

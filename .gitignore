@@ -5,3 +5,9 @@
 dist-newstyle
 *.swp
 *.swo
+dist-newstyle/
+.ghc.environment.*
+etna/dist-newstyle/
+progress.jsonl
+etna.log
+.hegel/

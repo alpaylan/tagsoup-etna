@@ -1,0 +1,99 @@
+name = "tagsoup"
+description = "Parsing and extracting information from (possibly malformed) HTML/XML documents (ndmitchell/tagsoup). Bug fixes mined from upstream history; modern HEAD is the base, each patch reverse-applies a fix to install the original bug."
+language = "haskell"
+strategies = ["quickcheck", "hedgehog", "falsify", "smallcheck"]
+crate = "tagsoup"
+base_commit = "294a67dd9452e29570e2a3eccd76993cf075aba6"
+
+# ---------------------------------------------------------------------------
+# Variant: escape_quote_xml_f37c174_1
+# ---------------------------------------------------------------------------
+[[tasks]]
+mutations = ["escape_quote_xml_f37c174_1"]
+
+[tasks.source]
+repo = "https://github.com/ndmitchell/tagsoup"
+commits = ["f37c174a412b6531af88dae379fbbaff4f44d9ad"]
+commit_subjects = ["#75, change the escapeXML so that ' isn't in xmlEntities"]
+origin = "internal"
+summary = "escapeXML used to be defined over `xmlEntities` only, which lists `quot/amp/lt/gt`. The single-quote entry `(\"#39\", \"'\")` lived in that list, but it had broken case semantics elsewhere — Ryan Scott's PR #75 moved it out of `xmlEntities` and prepended it directly to the IntMap consulted by escapeXML, so `'` would still be expanded to `&#39;` while no longer polluting the named-entity table. Reverse-applying the patch removes the `(\"#39\",\\\"'\\\"):` prefix, so `escapeXML` no longer escapes apostrophes."
+
+[tasks.injection]
+kind = "patch"
+files = ["src/Text/HTML/TagSoup/Entity.hs"]
+locations = [{ file = "src/Text/HTML/TagSoup/Entity.hs", line = 70, symbol = "escapeXML" }]
+patch = "patches/escape_quote_xml_f37c174_1.patch"
+
+[tasks.bug]
+short_name = "escapeXML_skips_apostrophe"
+invariant = "Every literal apostrophe (U+0027) appearing in the input to escapeXML must be expanded to `&#39;` in the output. The number of `&#39;` occurrences in the output equals the number of apostrophes in the input."
+how_triggered = "Reverse-applying the patch drops the `(\"#39\",\"\\'\"):` prefix from the IntMap consulted by escapeXML. Calling escapeXML \"it's\" then returns \"it's\" (apostrophe passes through) instead of \"it&#39;s\"."
+
+[[tasks.tasks]]
+property = "EscapeQuoteApostropheSafe"
+witnesses = [
+  { test_fn = "witness_escape_quote_apostrophe_safe_case_simple", note = "escapeXML \"it's\" must contain `&#39;`" },
+  { test_fn = "witness_escape_quote_apostrophe_safe_case_pair",   note = "escapeXML \"a''b\" must contain two `&#39;` sequences" },
+]
+
+# ---------------------------------------------------------------------------
+# Variant: uppercase_hex_entity_6cd85ac6_1
+# ---------------------------------------------------------------------------
+[[tasks]]
+mutations = ["uppercase_hex_entity_6cd85ac6_1"]
+
+[tasks.source]
+repo = "https://github.com/ndmitchell/tagsoup"
+commits = ["6cd85ac6b5c08d37c4f43c262ee36ef9b902773a"]
+commit_subjects = ["#32, make sure upper case &#X works in lookupEntity"]
+origin = "internal"
+summary = "Per HTML5, both `&#x...;` and `&#X...;` are valid hex character references. The buggy implementation matched only the lowercase `'x'` prefix in `lookupNumericEntity`, so any input prefixed with capital `'X'` was rejected as if it were a named entity. The fix replaces the literal `'x'` with a membership test against `\"xX\"`."
+
+[tasks.injection]
+kind = "patch"
+files = ["src/Text/HTML/TagSoup/Entity.hs"]
+locations = [{ file = "src/Text/HTML/TagSoup/Entity.hs", line = 37, symbol = "lookupNumericEntity" }]
+patch = "patches/uppercase_hex_entity_6cd85ac6_1.patch"
+
+[tasks.bug]
+short_name = "lookupNumericEntity_rejects_uppercase_X"
+invariant = "For every string of valid hex digits, `lookupNumericEntity (\"x\" ++ ds)` and `lookupNumericEntity (\"X\" ++ ds)` produce the same Just-result."
+how_triggered = "Reverse-applying the patch restores the literal `'x'` pattern on the hex branch. Calling lookupNumericEntity \"X4e\" then returns Nothing instead of Just \"N\"."
+
+[[tasks.tasks]]
+property = "LookupNumericEntityCaseInsensitivePrefix"
+witnesses = [
+  { test_fn = "witness_lookup_numeric_entity_case_insensitive_prefix_case_4e", note = "lookupNumericEntity \"X4e\" must equal lookupNumericEntity \"x4e\"" },
+  { test_fn = "witness_lookup_numeric_entity_case_insensitive_prefix_case_41", note = "lookupNumericEntity \"X41\" must equal lookupNumericEntity \"x41\"" },
+]
+
+# ---------------------------------------------------------------------------
+# Variant: chr_oob_overflow_synth_1
+# ---------------------------------------------------------------------------
+[[tasks]]
+mutations = ["chr_oob_overflow_synth_1"]
+
+[tasks.source]
+repo = "https://github.com/ndmitchell/tagsoup"
+commits = ["f2dcaa682c6d5f7dea34eb09bb5b02532be523c9"]
+commit_subjects = ["Don't crash on malformed characters, replace them with ?"]
+origin = "synthesized"
+summary = "An entity like `&#9999999999;` parses as a numeric reference, but its decoded code point exceeds the valid Char range (`0x10FFFF`). The historical fix in commit f2dcaa68 replaced the unguarded `chr` call with one that returns `'?'` on overflow. The modern Entity.hs codebase took a stricter route: an `inRange` test that returns Nothing for out-of-range values. The buggy variant deletes that test, so `chr $ fromInteger a` raises `Prelude.chr: bad argument` for any numeric entity above U+10FFFF. Patch synthesised against modern HEAD because the upstream commit predates the move from Implementation.hs to Entity.hs."
+
+[tasks.injection]
+kind = "patch"
+files = ["src/Text/HTML/TagSoup/Entity.hs"]
+locations = [{ file = "src/Text/HTML/TagSoup/Entity.hs", line = 47, symbol = "lookupNumericEntity" }]
+patch = "patches/chr_oob_overflow_synth_1.patch"
+
+[tasks.bug]
+short_name = "lookupNumericEntity_overflow_crash"
+invariant = "lookupNumericEntity must never raise an exception. For any non-negative Integer N rendered as a decimal numeric entity, lookupNumericEntity (show N) must terminate with either Nothing or Just c where ord c <= ord (maxBound :: Char)."
+how_triggered = "Reverse-applying the patch removes the inRange test guarding `chr $ fromInteger a`. Calling lookupNumericEntity \"1114112\" (or any larger digit string) then raises `Prelude.chr: bad argument`."
+
+[[tasks.tasks]]
+property = "LookupNumericEntityNoCrash"
+witnesses = [
+  { test_fn = "witness_lookup_numeric_entity_no_crash_case_huge",      note = "lookupNumericEntity \"89439085908539082\" must not raise" },
+  { test_fn = "witness_lookup_numeric_entity_no_crash_case_above_max", note = "lookupNumericEntity \"1114112\" (one above maxBound :: Char) must not raise" },
+]
