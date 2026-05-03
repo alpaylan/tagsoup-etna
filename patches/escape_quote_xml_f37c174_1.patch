@@ -1,24 +1,13 @@
-From f37c174a412b6531af88dae379fbbaff4f44d9ad Mon Sep 17 00:00:00 2001
-From: Neil Mitchell <ndmitchell@gmail.com>
-Date: Tue, 18 Sep 2018 15:04:51 +0100
-Subject: [PATCH] #75, change the escapeXML so that ' isn't in xmlEntities
-
----
- src/Text/HTML/TagSoup/Entity.hs | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
 diff --git a/src/Text/HTML/TagSoup/Entity.hs b/src/Text/HTML/TagSoup/Entity.hs
-index ace5c3f..e8a32e3 100644
+index e8a32e3..76cd0ac 100644
 --- a/src/Text/HTML/TagSoup/Entity.hs
 +++ b/src/Text/HTML/TagSoup/Entity.hs
 @@ -67,7 +67,7 @@ lookupNamedEntity = \x -> Map.lookup x mp
  -- > escapeXML "hello & world" == "hello &amp; world"
  escapeXML :: String -> String
  escapeXML = concatMap $ \x -> IntMap.findWithDefault [x] (ord x) mp
--    where mp = IntMap.fromList [(ord b, "&"++a++";") | (a,[b]) <- xmlEntities]
-+    where mp = IntMap.fromList [(ord b, "&"++a++";") | (a,[b]) <- ("#39","\'"):xmlEntities]
-
-
+-    where mp = IntMap.fromList [(ord b, "&"++a++";") | (a,[b]) <- ("#39","\'"):xmlEntities]
++    where mp = IntMap.fromList [(ord b, "&"++a++";") | (a,[b]) <- xmlEntities]
+ 
+ 
  -- | A table mapping XML entity names to resolved strings. All strings are a single character long.
---
-2.43.0

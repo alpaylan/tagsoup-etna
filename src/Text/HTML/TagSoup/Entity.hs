@@ -44,7 +44,6 @@ lookupNumericEntity = f
             test $ not $ null xs
             case reader xs of
                 [(a,"")] -> do
-                    test $ inRange (toInteger $ ord minBound, toInteger $ ord maxBound) a
                     return [chr $ fromInteger a]
                 _ -> Nothing
 

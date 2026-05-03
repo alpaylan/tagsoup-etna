@@ -1,25 +1,13 @@
-From 6cd85ac6b5c08d37c4f43c262ee36ef9b902773a Mon Sep 17 00:00:00 2001
-From: Neil Mitchell <ndmitchell@gmail.com>
-Date: Sat, 9 Jan 2016 21:15:06 +0000
-Subject: [PATCH] #32, make sure upper case &#X works in lookupEntity
-
-(synthesised against modern src/Text/HTML/TagSoup/Entity.hs)
----
- src/Text/HTML/TagSoup/Entity.hs | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
 diff --git a/src/Text/HTML/TagSoup/Entity.hs b/src/Text/HTML/TagSoup/Entity.hs
-index 0000000..0000001 100644
+index e8a32e3..e088b75 100644
 --- a/src/Text/HTML/TagSoup/Entity.hs
 +++ b/src/Text/HTML/TagSoup/Entity.hs
 @@ -34,7 +34,7 @@ lookupNumericEntity :: String -> Maybe String
  lookupNumericEntity = f
          -- entity = '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'
      where
--        f ('x':xs) = g [('0','9'),('a','f'),('A','F')] readHex xs
-+        f (x:xs) | x `elem` "xX" = g [('0','9'),('a','f'),('A','F')] readHex xs
+-        f (x:xs) | x `elem` "xX" = g [('0','9'),('a','f'),('A','F')] readHex xs
++        f ('x':xs) = g [('0','9'),('a','f'),('A','F')] readHex xs
          f xs = g [('0','9')] reads xs
-
+ 
          g :: [(Char,Char)] -> ReadS Integer -> String -> Maybe String
---
-2.43.0

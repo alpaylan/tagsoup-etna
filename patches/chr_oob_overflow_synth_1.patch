@@ -1,29 +1,12 @@
-From 0000000000000000000000000000000000000001 Mon Sep 17 00:00:00 2001
-From: ETNA workload generator <etna@local>
-Date: Thu, 1 May 2026 03:30:00 +0000
-Subject: [PATCH] synthesised: don't crash on numeric entities above maxBound
-
-Mirrors the historical fix at f2dcaa682c6d5f7dea34eb09bb5b02532be523c9
-("Don't crash on malformed characters, replace them with ?") which has
-since been re-implemented as an inRange check inside lookupNumericEntity.
-The buggy variant removes the inRange check, so the unguarded `chr` call
-raises Prelude.chr: bad argument for any numeric entity > 0x10FFFF.
-
----
- src/Text/HTML/TagSoup/Entity.hs | 1 +
- 1 file changed, 1 insertion(+)
-
 diff --git a/src/Text/HTML/TagSoup/Entity.hs b/src/Text/HTML/TagSoup/Entity.hs
-index 0000000..0000001 100644
+index e8a32e3..5cb3834 100644
 --- a/src/Text/HTML/TagSoup/Entity.hs
 +++ b/src/Text/HTML/TagSoup/Entity.hs
-@@ -43,6 +43,7 @@ lookupNumericEntity = f
+@@ -44,7 +44,6 @@ lookupNumericEntity = f
              test $ not $ null xs
              case reader xs of
                  [(a,"")] -> do
-+                    test $ inRange (toInteger $ ord minBound, toInteger $ ord maxBound) a
+-                    test $ inRange (toInteger $ ord minBound, toInteger $ ord maxBound) a
                      return [chr $ fromInteger a]
                  _ -> Nothing
-
---
-2.43.0
+ 

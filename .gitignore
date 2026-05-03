@@ -11,3 +11,9 @@ etna/dist-newstyle/
 progress.jsonl
 etna.log
 .hegel/
+/.hegel/
+/.marauders/
+/etna.log
+/progress.jsonl
+/dist-newstyle/
+/etna/dist-newstyle/
