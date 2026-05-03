@@ -1,12 +1,12 @@
 diff --git a/src/Text/HTML/TagSoup/Entity.hs b/src/Text/HTML/TagSoup/Entity.hs
-index e8a32e3..5cb3834 100644
+index 5cb3834..e8a32e3 100644
 --- a/src/Text/HTML/TagSoup/Entity.hs
 +++ b/src/Text/HTML/TagSoup/Entity.hs
-@@ -44,7 +44,6 @@ lookupNumericEntity = f
+@@ -44,6 +44,7 @@ lookupNumericEntity = f
              test $ not $ null xs
              case reader xs of
                  [(a,"")] -> do
--                    test $ inRange (toInteger $ ord minBound, toInteger $ ord maxBound) a
++                    test $ inRange (toInteger $ ord minBound, toInteger $ ord maxBound) a
                      return [chr $ fromInteger a]
                  _ -> Nothing
  
